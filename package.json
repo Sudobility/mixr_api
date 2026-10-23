@@ -1,6 +1,6 @@
 {
   "name": "mixr_api",
-  "version": "0.0.30",
+  "version": "0.0.31",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
@@ -24,7 +24,7 @@
     "test:db": "vitest run --config vitest.db.config.ts"
   },
   "devDependencies": {
-    "@sudobility/test-db-guard": "1.0.2",
+    "@sudobility/test-db-guard": "^1.0.3",
     "@types/bun": "latest",
     "@types/node": "^24.10.1",
     "@typescript-eslint/eslint-plugin": "^8.50.0",
@@ -41,9 +41,9 @@
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.4",
-    "@sudobility/mixr_types": "^0.0.24",
-    "@sudobility/subscription_service": "^1.0.24",
-    "@sudobility/types": "^1.9.68",
+    "@sudobility/mixr_types": "^0.0.26",
+    "@sudobility/subscription_service": "^1.0.29",
+    "@sudobility/types": "^1.9.74",
     "drizzle-orm": "^0.44.6",
     "firebase-admin": "^13.6.0",
     "hono": "^4.9.12",
