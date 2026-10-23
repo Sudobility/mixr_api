@@ -1,6 +1,6 @@
 {
   "name": "mixr_api",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
@@ -26,30 +26,30 @@
   "devDependencies": {
     "@sudobility/test-db-guard": "^1.0.3",
     "@types/bun": "latest",
-    "@types/node": "~24.10.9",
-    "@typescript-eslint/eslint-plugin": "~8.53.1",
-    "@typescript-eslint/parser": "~8.53.1",
-    "drizzle-kit": "~0.31.8",
-    "eslint": "~9.39.2",
+    "@types/node": "~24.19.2",
+    "@typescript-eslint/eslint-plugin": "~8.72.0",
+    "@typescript-eslint/parser": "~8.72.0",
+    "drizzle-kit": "~0.31.11",
+    "eslint": "~9.39.5",
     "eslint-plugin-import": "~2.32.0",
-    "prettier": "~3.8.1",
+    "prettier": "~3.9.10",
     "typescript": "~5.9.3",
-    "vitest": "~4.0.18"
+    "vitest": "~4.1.12"
   },
   "overrides": {
     "esbuild": "0.25.12"
   },
   "dependencies": {
     "@hono/zod-validator": "~0.7.6",
-    "@sudobility/mixr_types": "^0.0.28",
-    "@sudobility/subscription_service": "^1.0.30",
-    "@sudobility/types": "^1.9.75",
-    "drizzle-orm": "~0.44.7",
-    "firebase-admin": "~13.6.0",
+    "@sudobility/mixr_types": "^0.0.29",
+    "@sudobility/subscription_service": "^1.0.31",
+    "@sudobility/types": "^1.9.76",
+    "drizzle-orm": "~0.45.4",
+    "firebase-admin": "~13.10.0",
     "hono": "~4.11.5",
     "openai": "~6.16.0",
-    "postgres": "~3.4.8",
-    "zod": "~4.3.6"
+    "postgres": "~3.4.9",
+    "zod": "~4.6.5"
   },
   "repository": {
     "type": "git",

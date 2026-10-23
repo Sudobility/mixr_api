@@ -18,8 +18,7 @@ const app = new Hono();
  */
 app.get('/', async c => {
   const subcategory = c.req.query('subcategory') as
-    | IngredientSubcategory
-    | undefined;
+    IngredientSubcategory | undefined;
 
   try {
     let results;

@@ -145,28 +145,26 @@ async function getCompleteRecipes(
     equipmentByRecipe.set(eqItem.recipeId, list);
   }
 
-  return recipeList.map(
-    (recipe): Recipe => ({
-      id: recipe.id,
-      name: recipe.name,
-      description: recipe.description,
-      moodId: recipe.moodId,
-      createdAt: recipe.createdAt.toISOString(),
-      mood: recipe.moodId ? moodMap.get(recipe.moodId) || null : null,
-      ingredients: (ingredientsByRecipe.get(recipe.id) || []).map(ri => ({
-        id: ri.ingredientId,
-        name: ri.ingredientName,
-        icon: ri.ingredientIcon,
-        amount: ri.amount,
-      })),
-      steps: (stepsByRecipe.get(recipe.id) || []).map(s => s.instruction),
-      equipment: (equipmentByRecipe.get(recipe.id) || []).map(re => ({
-        id: re.equipmentId,
-        name: re.equipmentName,
-        icon: re.equipmentIcon,
-      })),
-    })
-  );
+  return recipeList.map((recipe): Recipe => ({
+    id: recipe.id,
+    name: recipe.name,
+    description: recipe.description,
+    moodId: recipe.moodId,
+    createdAt: recipe.createdAt.toISOString(),
+    mood: recipe.moodId ? moodMap.get(recipe.moodId) || null : null,
+    ingredients: (ingredientsByRecipe.get(recipe.id) || []).map(ri => ({
+      id: ri.ingredientId,
+      name: ri.ingredientName,
+      icon: ri.ingredientIcon,
+      amount: ri.amount,
+    })),
+    steps: (stepsByRecipe.get(recipe.id) || []).map(s => s.instruction),
+    equipment: (equipmentByRecipe.get(recipe.id) || []).map(re => ({
+      id: re.equipmentId,
+      name: re.equipmentName,
+      icon: re.equipmentIcon,
+    })),
+  }));
 }
 
 /**
