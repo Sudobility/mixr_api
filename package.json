@@ -1,6 +1,6 @@
 {
   "name": "mixr_api",
-  "version": "0.0.31",
+  "version": "0.0.32",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
@@ -53,6 +53,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/johnqh/mixr_api.git"
+    "url": "https://github.com/Sudobility/mixr_api.git"
   }
 }
