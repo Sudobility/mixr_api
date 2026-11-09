@@ -3,210 +3,109 @@
 > **Git policy — never auto-commit or auto-push.** Leave your work in the working tree.
 > Run `git commit`, `git push`, `gh pr create`, or `scripts/push_all.sh` **only when the user
 > explicitly asks in that turn**. Approval for an earlier change does not carry forward, and
-> finishing a task is not permission to commit it.
+> finishing a task is not permission to commit it. Stay on the current branch; do not create
+> feature branches for code changes.
 
-Backend API server for MIXR - AI-powered cocktail recipe generation platform.
+Backend API for MIXR -- AI-powered cocktail recipe generation. Takes a user's equipment,
+ingredients, and mood; generates a recipe via an LLM; persists recipes, ratings, favorites.
 
-## Tech Stack
+## Stack
 
-- **Language**: TypeScript
-- **Runtime**: Bun
-- **Package Manager**: Bun (do not use npm/yarn/pnpm for installing dependencies)
-- **Framework**: Hono (fast web framework)
-- **Database**: PostgreSQL with Drizzle ORM (schema: `mixr`)
-- **Auth**: Firebase Admin SDK (dev mode fallback with mock user)
-- **AI**: OpenAI GPT-4 (or LM Studio for local dev)
-- **Validation**: Zod
-
-## Project Structure
-
-```
-src/
-├── index.ts              # Entry point, Hono app setup, server start
-├── config/
-│   ├── env.ts            # Env var loading with Zod validation
-│   └── firebase.ts       # Firebase Admin initialization
-├── db/
-│   ├── index.ts          # Drizzle instance & PostgreSQL connection
-│   ├── schema.ts         # 9 tables with relations
-│   ├── migrate.ts        # Run migrations
-│   └── seed.ts           # Seed equipment (26), ingredients (52), moods (8)
-├── middleware/
-│   ├── auth.ts           # requireAuth, optionalAuth (dev mock: dev-user-123)
-│   └── errorHandler.ts   # Global error handler
-├── routes/
-│   ├── equipment.ts      # GET /api/equipment, /:id, /subcategories
-│   ├── ingredients.ts    # GET /api/ingredients, /:id, /subcategories
-│   ├── moods.ts          # GET /api/moods, /:id
-│   ├── recipes.ts        # POST generate, GET list/detail, ratings CRUD
-│   └── users.ts          # GET/PUT me, preferences, recipes, favorites
-├── services/
-│   └── recipeGenerator.ts # OpenAI/LM Studio recipe generation
-└── types/
-    └── index.ts          # ApiResponse, subcategory types
-tests/
-└── unit/
-    └── placeholder.test.ts
-drizzle/
-└── migrations/           # Auto-generated SQL migrations
-```
+- **TypeScript on Bun** (ESM). Package manager is **Bun only** — never npm/yarn/pnpm.
+- **Hono** web framework; **Drizzle ORM** on **PostgreSQL** (schema `mixr`).
+- **Firebase Admin** auth; **OpenAI**-compatible LLM; **Zod** validation.
+- Private `@sudobility/*` deps come from GitHub Packages (`.npmrc`); `bun install` needs a
+  GitHub token with `read:packages`.
 
 ## Commands
 
 ```bash
-bun run dev          # Start dev server with hot reload
-bun run start        # Start production server
-bun run build        # Build for production (bun build)
-bun run start:prod   # Run production build
-bun run test         # Run unit tests (vitest)
-bun run test:integration # Run integration tests
-bun run lint         # Run ESLint
-bun run typecheck    # TypeScript type check
-bun run format       # Format with Prettier
-bun run db:generate  # Generate migrations from schema
-bun run db:migrate   # Run migrations
-bun run db:seed      # Seed database
-bun run db:studio    # Open Drizzle Studio
+bun run dev          # dev server, hot reload, port 6174
+bun run start        # run from src; build / start:prod for the bundled dist/
+bun run test:unit    # unit tests (vitest) — THIS is CI's test run. (`bun run test` does NOT exist)
+bun run test:db      # DB + integration suites; manual only, needs external services (see Testing)
+bun run lint         # eslint src
+bun run typecheck    # tsc --noEmit
+bun run format       # prettier --write src
+bun run db:generate  # generate migrations from schema
+bun run db:migrate   # apply migrations (src/db/migrate.ts)
+bun run db:seed      # seed equipment (26), ingredients (91), moods (8)
+bun run db:studio    # Drizzle Studio
 ```
+
+## Layout
+
+```
+src/
+├── index.ts                  # Hono app, middleware chain, route mounting, server export
+├── config/
+│   ├── env.ts                # env loading + Zod validation (see gotchas)
+│   └── firebase.ts           # Firebase Admin init; exports isFirebaseEnabled
+├── db/
+│   ├── index.ts              # Drizzle instance + postgres connection
+│   ├── schema.ts             # 11 tables (mixr schema) + relations
+│   ├── migrate.ts, seed.ts
+├── middleware/
+│   ├── auth.ts               # requireAuth / optionalAuth (dev mock user: dev-user-123)
+│   ├── errorHandler.ts       # global onError handler
+│   └── subscription.ts       # RevenueCat helper (null when REVENUECAT_API_KEY unset)
+├── routes/                   # equipment, ingredients, moods, recipes, users, subscriptions
+├── services/
+│   ├── recipeGenerator.ts    # OpenAI/LM Studio call (gpt-4, or qwen-32b-everything on LM Studio)
+│   └── recipeParser.ts       # pure: buildRecipePrompt, parseRecipeResponse, extractJson
+└── validation/schemas.ts     # Zod request schemas
+tests/unit/                   # errorHandler, recipeGenerator, validation, placeholder (4 files, 55 tests)
+drizzle/migrations/           # generated SQL
+```
+
+Shared/response types come from `@sudobility/mixr_types` (there is no local `src/types`).
+
+## Architecture notes
+
+- Middleware chain (`src/index.ts`): `logger()` → `prettyJSON()` → `cors()` → `onError(errorHandler)`
+  → routes. CORS origin is `CORS_ORIGINS` split on commas, else `'*'`.
+- Routes are per-file Hono sub-apps mounted under `/api/*`. **Subscriptions mount at
+  `/api/v1/users`** (note the `v1`), everything else under `/api/<name>`.
+- Response shape: `{ success, data?, error?, count? }`.
+- Auth: `requireAuth` sets `c.get('user')` (`AuthUser` = uid/email/emailVerified). **When Firebase
+  is not configured (`isFirebaseEnabled` false), auth is bypassed with a mock user `dev-user-123`** —
+  so protected routes work locally with no token. In `users.ts`, auth is applied via
+  `app.use('/me/*', requireAuth)`, not inline per route.
+- LLM: if `LLM_STUDIO_ENDPOINT` is set, the OpenAI client points there with a dummy key and model
+  `qwen-32b-everything`; otherwise it uses `OPENAI_API_KEY` and `gpt-4`.
 
 ## Database
 
-Uses PostgreSQL with a `mixr` schema. Tables:
+PostgreSQL, schema `mixr`. 11 tables: `equipment`, `ingredients`, `moods`, `users`
+(PK = Firebase UID), `user_preferences` (equipment/ingredient id arrays), `recipes`,
+`recipe_ingredients`, `recipe_steps`, `recipe_equipment` (joins), `recipe_ratings`
+(1–5 stars, unique per user+recipe), `user_favorites`. See `src/db/schema.ts`.
 
-| Table | Purpose |
-|-------|---------|
-| `equipment` | Bar tools (26 items, 4 subcategories) |
-| `ingredients` | Cocktail ingredients (52 items, 6 subcategories) |
-| `moods` | Mood options for recipe generation (8 items) |
-| `users` | Firebase UID mapping |
-| `user_preferences` | Equipment/ingredient ID arrays |
-| `recipes` | AI-generated recipes |
-| `recipe_ingredients` | Recipe-ingredient join with amounts |
-| `recipe_steps` | Ordered instructions |
-| `recipe_equipment` | Recipe-equipment join |
-| `recipe_ratings` | User ratings (1-5 stars + review) |
-| `user_favorites` | Favorited recipes |
+## Environment
 
-## Environment Variables
+Required: `DATABASE_URL`, `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`.
+Optional: `OPENAI_API_KEY`, `LLM_STUDIO_ENDPOINT`, `REVENUECAT_API_KEY`, `PORT` (6174),
+`NODE_ENV`, `CORS_ORIGINS`, `TEST_DATABASE_URL`. Copy `.env.example` → `.env`. Full list in README.
 
-Required in `.env.local`:
-
-```bash
-# Database
-DATABASE_URL=postgresql://user:pass@localhost:5432/mixr
-
-# Firebase Admin
-FIREBASE_PROJECT_ID=your-project-id
-FIREBASE_CLIENT_EMAIL=firebase-adminsdk@...
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n..."
-
-# AI (one of these)
-OPENAI_API_KEY=sk-...
-LLM_STUDIO_ENDPOINT=http://localhost:1234/v1  # Optional local dev
-
-# Server
-PORT=6174
-NODE_ENV=development
-```
-
-Env loading priority: `.env.local` > `.env` > `process.env`
-
-## API Routes
-
-All routes under `/api/`:
-
-### Equipment
-- `GET /api/equipment` - List (optional `?subcategory=` filter)
-- `GET /api/equipment/:id` - Get by ID
-- `GET /api/equipment/subcategories` - List subcategories
-
-### Ingredients
-- `GET /api/ingredients` - List (optional `?subcategory=` filter)
-- `GET /api/ingredients/:id` - Get by ID
-- `GET /api/ingredients/subcategories` - List subcategories
-
-### Moods
-- `GET /api/moods` - List all
-- `GET /api/moods/:id` - Get by ID
-
-### Recipes (auth required for POST/DELETE)
-- `POST /api/recipes/generate` - AI-generate recipe
-- `GET /api/recipes` - List (paginated: `?limit=&offset=`)
-- `GET /api/recipes/:id` - Get with ingredients, steps, equipment
-- `POST /api/recipes/:id/ratings` - Submit rating (upsert)
-- `GET /api/recipes/:id/ratings` - List ratings
-- `GET /api/recipes/:id/ratings/aggregate` - Average + distribution
-- `DELETE /api/recipes/:recipeId/ratings/:ratingId` - Delete own rating
-
-### Users (all auth required)
-- `GET /api/users/me` - Current user (auto-create on first call)
-- `PUT /api/users/me` - Update profile
-- `GET /api/users/me/preferences` - Get preferences
-- `PUT /api/users/me/preferences` - Update preferences
-- `GET /api/users/me/recipes` - User's generated recipes
-- `GET /api/users/me/favorites` - Favorited recipes
-- `POST /api/users/me/favorites` - Add favorite
-- `DELETE /api/users/me/favorites/:recipeId` - Remove favorite
-
-### Health
-- `GET /` - Health check
-- `GET /health` - Health check
-
-## Code Patterns
-
-### Route Handler
-```typescript
-app.get('/api/equipment', async (c) => {
-  const subcategory = c.req.query('subcategory');
-  const result = await db.select().from(equipment)
-    .where(subcategory ? eq(equipment.subcategory, subcategory) : undefined);
-  return c.json({ success: true, data: result, count: result.length });
-});
-```
-
-### Auth Middleware
-```typescript
-app.post('/api/recipes/generate', requireAuth, async (c) => {
-  const userId = c.get('userId');  // From Firebase token
-  // ...
-});
-```
-
-### Response Format
-```json
-{ "success": true, "data": [...], "count": 5 }
-{ "success": false, "error": "Not found" }
-```
-
-## Key Dependencies
-
-- `@sudobility/mixr_types` - Shared TypeScript types
-- `@sudobility/types` - Common Sudobility types
-- `hono` - Fast web framework
-- `drizzle-orm` - Type-safe ORM
-- `postgres` - PostgreSQL driver
-- `zod` - Schema validation
-- `firebase-admin` - Auth verification
-- `openai` - LLM API client
-
-## Middleware Chain
-
-`logger()` -> `prettyJSON()` -> `cors(*)` -> `errorHandler` -> routes
-
-## Docker
-
-Dockerfile included for CI/CD. Uses `oven/bun:latest`, exposes port 6174, health check at `/health`.
-
-## Git Workflow
-
-- Do not use feature branches for code changes. Always stay on the current branch.
+**Load priority is `process.env` > `.env.local` > `.env`** (environment wins over files). It used
+to be reversed, which let a committed file silently override an exported variable and defeated the
+test DB guard (the guard sets `DATABASE_URL` in `process.env`, which `.env` then replaced). Do not
+flip it back. `src/config/env.ts` derives its root from `import.meta.url`, not `import.meta.dir`:
+the latter is Bun-only and is `undefined` under Node, which is what vitest runs on.
 
 ## Testing
 
-- **One runner, two configs.** `bun run test` (`vitest.config.ts`) excludes `**/*.db.test.ts` — 4 files, 55 tests, never touches a database; this is what CI runs. `bun run test:db` (`vitest.db.config.ts`) collects only those files and is **manual, never run in CI**.
-- **`TEST_DATABASE_URL`, not `DATABASE_URL`.** `tests/setup.db.ts` requires the host be exactly `localhost` (`127.0.0.1` refused). `tests/setup.ts` deletes `DATABASE_URL` outright.
-- **The db suite needs external services.** `src/integration.db.test.ts` expects the API on `:6174` — use `./run-integration-tests.sh`, which starts one — and `src/llm-studio.db.test.ts` expects LM Studio on `:1234`. Without them those tests fail; that is environmental, not a regression.
-- These three files were previously orphaned: `test:integration` was `vitest run tests/*.test.ts`, and `tests/` contains only `unit/`, so the glob matched nothing and they never ran under any script.
-- **`src/config/env.ts` precedence is `process.env` > `.env.local` > `.env`.** It used to be the reverse, which let a committed file silently override an exported variable — and defeated the database guard, since the guard sets `DATABASE_URL` in `process.env` and `.env` replaced it. Do not flip it back.
-- `src/config/env.ts` derives its root from `import.meta.url`, not `import.meta.dir`; the latter is Bun-only and is `undefined` under Node, which is what vitest runs on.
+- **One runner, two configs.** `bun run test:unit` (`vitest.config.ts`) excludes `**/*.db.test.ts`
+  (4 files, 55 tests), never touches a database; this is what CI runs. `bun run test:db`
+  (`vitest.db.config.ts`) collects only `*.db.test.ts` and is **manual, never run in CI**.
+- **`TEST_DATABASE_URL`, not `DATABASE_URL`.** `tests/setup.db.ts` requires host be exactly
+  `localhost` (`127.0.0.1` refused). `tests/setup.ts` deletes `DATABASE_URL` outright.
+- **The db suite needs external services.** `src/integration.db.test.ts` expects the API on
+  `:6174` — use `./run-integration-tests.sh`, which starts one — and `src/llm-studio.db.test.ts`
+  expects LM Studio on `:1234`. Failures without those are environmental, not regressions.
 
+## Docker / CI
+
+`Dockerfile` (`oven/bun:latest`, non-root, port 6174, `/health` healthcheck) needs the
+`GH_PACKAGES_TOKEN` build-arg for private packages. `.github/workflows/ci-cd.yml` delegates to a
+shared reusable workflow: tests on `develop`, Docker Hub publish on `main` (npm publish skipped).
