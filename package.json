@@ -1,6 +1,6 @@
 {
   "name": "mixr_api",
-  "version": "0.0.37",
+  "version": "0.0.38",
   "module": "src/index.ts",
   "type": "module",
   "private": true,
