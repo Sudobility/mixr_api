@@ -6,9 +6,9 @@
       "name": "mixr_api",
       "dependencies": {
         "@hono/zod-validator": "~0.7.6",
-        "@sudobility/mixr_types": "^0.0.32",
-        "@sudobility/subscription_service": "^1.0.34",
-        "@sudobility/types": "^1.9.79",
+        "@sudobility/mixr_types": "^0.0.33",
+        "@sudobility/subscription_service": "^1.0.35",
+        "@sudobility/types": "^1.10.1",
         "drizzle-orm": "~0.45.4",
         "firebase-admin": "~13.10.0",
         "hono": "~4.11.5",
@@ -221,13 +221,13 @@
 
     "@standard-schema/spec": ["@standard-schema/spec@1.1.0", "", {}, "sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w=="],
 
-    "@sudobility/mixr_types": ["@sudobility/mixr_types@0.0.32", "https://npm.pkg.github.com/download/@sudobility/mixr_types/0.0.32/04016b3f81514e43bc58c9e09508074d5d1a9172", { "peerDependencies": { "@sudobility/types": "^1.9.79" } }, "sha512-cl5aV+/Oqp3Z8obhvkdhtqq8M8vVinKKZNPb3+o4QSGFsTPo3j6oCZl9ro6mkqZejl2QIHZRqErBYfZfI+nnlQ=="],
+    "@sudobility/mixr_types": ["@sudobility/mixr_types@0.0.33", "https://npm.pkg.github.com/download/@sudobility/mixr_types/0.0.33/048adb26a5758bcf74c8608ab51da604d9bc09cf", { "peerDependencies": { "@sudobility/types": "^1.10.1" } }, "sha512-LMXA6aEceLWfVcu1gFu5W3HxXaaDdreKfgI3rI7F6CAvu4H/lS/8pi48amnR2bYahyI6bvkGPY2AmzMmImLRHw=="],
 
-    "@sudobility/subscription_service": ["@sudobility/subscription_service@1.0.34", "https://npm.pkg.github.com/download/@sudobility/subscription_service/1.0.34/a1d4e84b3d0d56a7a55c101538c4ab8951135a3d", {}, "sha512-fC92cqRh536hOFYog+Y4LJochmDvPDIataybFj2xbHHja+fs+7dz9Zz79QbMTiD6Rr1zcxDa61xK3rprY2SE4g=="],
+    "@sudobility/subscription_service": ["@sudobility/subscription_service@1.0.35", "https://npm.pkg.github.com/download/@sudobility/subscription_service/1.0.35/e33e00b30c0f648ec3c56fb96062ea56b32289a5", {}, "sha512-WO19m2o+wp1ti/tglM1sgW01VYhz93zvQX7rRaBhzSaKim6vpsYoR8X5kInTg2nKequMpe0UxAga2NXMM6SBEA=="],
 
     "@sudobility/test-db-guard": ["@sudobility/test-db-guard@1.0.3", "https://npm.pkg.github.com/download/@sudobility/test-db-guard/1.0.3/1b60364ccb30369e4ddc9a005ffdf03ea2644a65", {}, "sha512-VLYACu7PMDG4hqO9g5y/E0NOgDNS5HnG+UU/jr5Po0S5zrZv80i51rxwC2sOVX8gbyR04s632OoMULFiju4aZw=="],
 
-    "@sudobility/types": ["@sudobility/types@1.9.79", "https://npm.pkg.github.com/download/@sudobility/types/1.9.79/59975e39d6ab7e215418a489ef3cfe214b7521f4", {}, "sha512-rRtDT++fVy+I1m6E31fq752lxCQytFzwfqpJe5wDMPLcC1rJOBa7v+4+5e3cmX8VV1CsuLg8PTLMFe6A7AELRQ=="],
+    "@sudobility/types": ["@sudobility/types@1.10.1", "https://npm.pkg.github.com/download/@sudobility/types/1.10.1/8e353f55822e0bc3fa9555dfe3aee593e140c012", {}, "sha512-LmJyjDDY5rHDET1wstkT0i59SSOrOXijL2iqrgfcK6VHtKcBEw7FFpbw4CyHn+dhR9kqkYpEydSfypoqw7crMg=="],
 
     "@tootallnate/once": ["@tootallnate/once@2.0.1", "", {}, "sha512-HqmEUIGRJ5fSXchkVgR5F7qn48bDBzv0kWj/Kfu5e6uci4UlEeng4331LnBkWffb++Ei3FOVLxo8JJWMFBDMeQ=="],
 
