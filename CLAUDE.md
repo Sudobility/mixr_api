@@ -66,7 +66,9 @@ Shared/response types come from `@sudobility/mixr_types` (there is no local `src
   → routes. CORS origin is `CORS_ORIGINS` split on commas, else `'*'`.
 - Routes are per-file Hono sub-apps mounted under `/api/*`. **Subscriptions mount at
   `/api/v1/users`** (note the `v1`), everything else under `/api/<name>`.
-- Response shape: `{ success, data?, error?, count? }`.
+- Response shape: the canonical `BaseResponse<T>` `{ success, data?, error?, timestamp }` from
+  `@sudobility/types` (via `successResponse`/`errorResponse`). `MixrApiResponse<T>` is now an alias
+  of `BaseResponse<T>`; the old `count` field was dropped.
 - Auth: `requireAuth` sets `c.get('user')` (`AuthUser` = uid/email/emailVerified). **When Firebase
   is not configured (`isFirebaseEnabled` false), auth is bypassed with a mock user `dev-user-123`** —
   so protected routes work locally with no token. In `users.ts`, auth is applied via

@@ -13,6 +13,7 @@ import {
   userPreferences,
   recipeRatings,
 } from '../db';
+import { successResponse, errorResponse } from '@sudobility/types';
 import { generateRecipe } from '../services/recipeGenerator';
 import { requireAuth, type AuthUser } from '../middleware/auth';
 import {
@@ -79,10 +80,7 @@ app.post('/generate', requireAuth, async c => {
     const parsed = generateRecipeSchema.safeParse(body);
     if (!parsed.success) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: parsed.error.issues.map(i => i.message).join('; '),
-        },
+        errorResponse(parsed.error.issues.map(i => i.message).join('; ')),
         400
       );
     }
@@ -114,22 +112,18 @@ app.post('/generate', requireAuth, async c => {
     // Validate that we have equipment and ingredients after preference fallback
     if (equipment_ids.length === 0) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error:
-            'equipment_ids must be a non-empty array (no saved preferences found)',
-        },
+        errorResponse(
+          'equipment_ids must be a non-empty array (no saved preferences found)'
+        ),
         400
       );
     }
 
     if (ingredient_ids.length === 0) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error:
-            'ingredient_ids must be a non-empty array (no saved preferences found)',
-        },
+        errorResponse(
+          'ingredient_ids must be a non-empty array (no saved preferences found)'
+        ),
         400
       );
     }
@@ -142,10 +136,7 @@ app.post('/generate', requireAuth, async c => {
 
     if (equipmentData.length === 0) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'No valid equipment found',
-        },
+        errorResponse('No valid equipment found'),
         400
       );
     }
@@ -158,10 +149,7 @@ app.post('/generate', requireAuth, async c => {
 
     if (ingredientData.length === 0) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'No valid ingredients found',
-        },
+        errorResponse('No valid ingredients found'),
         400
       );
     }
@@ -174,13 +162,7 @@ app.post('/generate', requireAuth, async c => {
       .limit(1);
 
     if (moodData.length === 0) {
-      return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'Mood not found',
-        },
-        404
-      );
+      return c.json<MixrErrorResponse>(errorResponse('Mood not found'), 404);
     }
 
     const mood = moodData[0];
@@ -262,18 +244,13 @@ app.post('/generate', requireAuth, async c => {
     // Fetch complete recipe with relations
     const completeRecipe = await getCompleteRecipe(savedRecipe.id);
 
-    return c.json<RecipeResponse>({
-      success: true,
-      data: completeRecipe!,
-    });
+    return c.json<RecipeResponse>(successResponse(completeRecipe!));
   } catch (error) {
     console.error('Recipe generation error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error:
-          error instanceof Error ? error.message : 'Failed to generate recipe',
-      },
+      errorResponse(
+        error instanceof Error ? error.message : 'Failed to generate recipe'
+      ),
       500
     );
   }
@@ -301,27 +278,16 @@ app.get('/', async c => {
       .offset(offset);
 
     if (allRecipes.length === 0) {
-      return c.json<RecipeListResponse>({
-        success: true,
-        data: [],
-        count: 0,
-      });
+      return c.json<RecipeListResponse>(successResponse([]));
     }
 
     // Batched queries to avoid N+1
     const recipesWithDetails = await getCompleteRecipes(allRecipes);
 
-    return c.json<RecipeListResponse>({
-      success: true,
-      data: recipesWithDetails,
-      count: recipesWithDetails.length,
-    });
+    return c.json<RecipeListResponse>(successResponse(recipesWithDetails));
   } catch (_error) {
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch recipes',
-      },
+      errorResponse('Failed to fetch recipes'),
       500
     );
   }
@@ -335,38 +301,20 @@ app.get('/:id', async c => {
   const id = parseInt(c.req.param('id'));
 
   if (isNaN(id)) {
-    return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Invalid ID',
-      },
-      400
-    );
+    return c.json<MixrErrorResponse>(errorResponse('Invalid ID'), 400);
   }
 
   try {
     const recipe = await getCompleteRecipe(id);
 
     if (!recipe) {
-      return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'Recipe not found',
-        },
-        404
-      );
+      return c.json<MixrErrorResponse>(errorResponse('Recipe not found'), 404);
     }
 
-    return c.json<RecipeResponse>({
-      success: true,
-      data: recipe,
-    });
+    return c.json<RecipeResponse>(successResponse(recipe));
   } catch (_error) {
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch recipe',
-      },
+      errorResponse('Failed to fetch recipe'),
       500
     );
   }
@@ -563,13 +511,7 @@ app.post('/:id/ratings', requireAuth, async c => {
   const recipeId = parseInt(c.req.param('id'));
 
   if (isNaN(recipeId)) {
-    return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Invalid recipe ID',
-      },
-      400
-    );
+    return c.json<MixrErrorResponse>(errorResponse('Invalid recipe ID'), 400);
   }
 
   try {
@@ -580,10 +522,7 @@ app.post('/:id/ratings', requireAuth, async c => {
     const parsed = submitRatingSchema.safeParse(body);
     if (!parsed.success) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: parsed.error.issues.map(i => i.message).join('; '),
-        },
+        errorResponse(parsed.error.issues.map(i => i.message).join('; ')),
         400
       );
     }
@@ -601,13 +540,7 @@ app.post('/:id/ratings', requireAuth, async c => {
       .limit(1);
 
     if (!recipe) {
-      return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'Recipe not found',
-        },
-        404
-      );
+      return c.json<MixrErrorResponse>(errorResponse('Recipe not found'), 404);
     }
 
     // Upsert rating (insert or update if already exists)
@@ -641,17 +574,11 @@ app.post('/:id/ratings', requireAuth, async c => {
       updated_at: rating.updatedAt.toISOString(),
     };
 
-    return c.json<RecipeRatingResponse>({
-      success: true,
-      data: ratingData,
-    });
+    return c.json<RecipeRatingResponse>(successResponse(ratingData));
   } catch (error) {
     console.error('Submit rating error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to submit rating',
-      },
+      errorResponse('Failed to submit rating'),
       500
     );
   }
@@ -665,13 +592,7 @@ app.get('/:id/ratings', async c => {
   const recipeId = parseInt(c.req.param('id'));
 
   if (isNaN(recipeId)) {
-    return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Invalid recipe ID',
-      },
-      400
-    );
+    return c.json<MixrErrorResponse>(errorResponse('Invalid recipe ID'), 400);
   }
 
   try {
@@ -722,12 +643,6 @@ app.get('/:id/ratings', async c => {
       .limit(limit)
       .offset(offset);
 
-    // Get total count
-    const [countResult] = await db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(recipeRatings)
-      .where(eq(recipeRatings.recipeId, recipeId));
-
     const ratingsList: RecipeRating[] = ratings.map(r => ({
       id: r.id,
       recipe_id: r.recipeId,
@@ -740,18 +655,11 @@ app.get('/:id/ratings', async c => {
       updated_at: r.updatedAt.toISOString(),
     }));
 
-    return c.json<RecipeRatingListResponse>({
-      success: true,
-      data: ratingsList,
-      count: countResult.count,
-    });
+    return c.json<RecipeRatingListResponse>(successResponse(ratingsList));
   } catch (error) {
     console.error('Get ratings error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch ratings',
-      },
+      errorResponse('Failed to fetch ratings'),
       500
     );
   }
@@ -765,13 +673,7 @@ app.get('/:id/ratings/aggregate', async c => {
   const recipeId = parseInt(c.req.param('id'));
 
   if (isNaN(recipeId)) {
-    return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Invalid recipe ID',
-      },
-      400
-    );
+    return c.json<MixrErrorResponse>(errorResponse('Invalid recipe ID'), 400);
   }
 
   try {
@@ -816,17 +718,11 @@ app.get('/:id/ratings/aggregate', async c => {
       rating_distribution: ratingDistribution,
     };
 
-    return c.json<RatingAggregateResponse>({
-      success: true,
-      data: aggregateData,
-    });
+    return c.json<RatingAggregateResponse>(successResponse(aggregateData));
   } catch (error) {
     console.error('Get aggregate ratings error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch aggregate ratings',
-      },
+      errorResponse('Failed to fetch aggregate ratings'),
       500
     );
   }
@@ -842,10 +738,7 @@ app.delete('/:recipeId/ratings/:ratingId', requireAuth, async c => {
 
   if (isNaN(recipeId) || isNaN(ratingId)) {
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Invalid recipe ID or rating ID',
-      },
+      errorResponse('Invalid recipe ID or rating ID'),
       400
     );
   }
@@ -868,10 +761,9 @@ app.delete('/:recipeId/ratings/:ratingId', requireAuth, async c => {
 
     if (!rating) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'Rating not found or you do not have permission to delete it',
-        },
+        errorResponse(
+          'Rating not found or you do not have permission to delete it'
+        ),
         404
       );
     }
@@ -879,17 +771,13 @@ app.delete('/:recipeId/ratings/:ratingId', requireAuth, async c => {
     // Delete rating
     await db.delete(recipeRatings).where(eq(recipeRatings.id, ratingId));
 
-    return c.json<DeleteRatingResponse>({
-      success: true,
-      data: { message: 'Rating deleted successfully' },
-    });
+    return c.json<DeleteRatingResponse>(
+      successResponse({ message: 'Rating deleted successfully' })
+    );
   } catch (error) {
     console.error('Delete rating error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to delete rating',
-      },
+      errorResponse('Failed to delete rating'),
       500
     );
   }

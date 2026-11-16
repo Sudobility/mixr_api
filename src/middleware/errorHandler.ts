@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import { HTTPException } from 'hono/http-exception';
+import { errorResponse } from '@sudobility/types';
 
 /**
  * Global error handler for the Hono application.
@@ -12,20 +13,8 @@ export async function errorHandler(err: Error, c: Context) {
   console.error('Error:', err);
 
   if (err instanceof HTTPException) {
-    return c.json(
-      {
-        success: false,
-        error: err.message,
-      },
-      err.status
-    );
+    return c.json(errorResponse(err.message), err.status);
   }
 
-  return c.json(
-    {
-      success: false,
-      error: 'Internal server error',
-    },
-    500
-  );
+  return c.json(errorResponse('Internal server error'), 500);
 }

@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
+import { successResponse, errorResponse } from '@sudobility/types';
 import { db, ingredients } from '../db';
 import {
   INGREDIENT_SUBCATEGORIES,
@@ -31,20 +32,17 @@ app.get('/', async c => {
       results = await db.select().from(ingredients);
     }
 
-    return c.json<IngredientListResponse>({
-      success: true,
-      data: results.map(r => ({
-        ...r,
-        createdAt: r.createdAt.toISOString(),
-      })),
-      count: results.length,
-    });
+    return c.json<IngredientListResponse>(
+      successResponse(
+        results.map(r => ({
+          ...r,
+          createdAt: r.createdAt.toISOString(),
+        }))
+      )
+    );
   } catch (_error) {
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch ingredients',
-      },
+      errorResponse('Failed to fetch ingredients'),
       500
     );
   }
@@ -55,10 +53,9 @@ app.get('/', async c => {
  * List all valid ingredient subcategory values.
  */
 app.get('/subcategories', async c => {
-  return c.json<IngredientSubcategoriesResponse>({
-    success: true,
-    data: [...INGREDIENT_SUBCATEGORIES],
-  });
+  return c.json<IngredientSubcategoriesResponse>(
+    successResponse([...INGREDIENT_SUBCATEGORIES])
+  );
 });
 
 /**
@@ -69,13 +66,7 @@ app.get('/:id', async c => {
   const id = parseInt(c.req.param('id'));
 
   if (isNaN(id)) {
-    return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Invalid ID',
-      },
-      400
-    );
+    return c.json<MixrErrorResponse>(errorResponse('Invalid ID'), 400);
   }
 
   try {
@@ -87,27 +78,20 @@ app.get('/:id', async c => {
 
     if (result.length === 0) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'Ingredient not found',
-        },
+        errorResponse('Ingredient not found'),
         404
       );
     }
 
-    return c.json<IngredientResponse>({
-      success: true,
-      data: {
+    return c.json<IngredientResponse>(
+      successResponse({
         ...result[0],
         createdAt: result[0].createdAt.toISOString(),
-      },
-    });
+      })
+    );
   } catch (_error) {
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch ingredient',
-      },
+      errorResponse('Failed to fetch ingredient'),
       500
     );
   }

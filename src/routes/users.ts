@@ -13,6 +13,7 @@ import {
   ingredients,
   moods,
 } from '../db';
+import { successResponse, errorResponse } from '@sudobility/types';
 import { requireAuth, type AuthUser } from '../middleware/auth';
 import {
   updateUserSchema,
@@ -24,8 +25,6 @@ import type {
   UserResponse,
   UserPreferencesResponse,
   RecipeListResponse,
-  AddFavoriteResponse,
-  RemoveFavoriteResponse,
   MixrErrorResponse,
   Recipe,
   User,
@@ -177,13 +176,7 @@ app.get('/me', async c => {
     const user = await getOrCreateUser(authUser);
 
     if (!user) {
-      return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'User not found',
-        },
-        404
-      );
+      return c.json<MixrErrorResponse>(errorResponse('User not found'), 404);
     }
 
     const userData: User = {
@@ -194,17 +187,11 @@ app.get('/me', async c => {
       updated_at: user.updatedAt.toISOString(),
     };
 
-    return c.json<UserResponse>({
-      success: true,
-      data: userData,
-    });
+    return c.json<UserResponse>(successResponse(userData));
   } catch (error) {
     console.error('Get user error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch user',
-      },
+      errorResponse('Failed to fetch user'),
       500
     );
   }
@@ -223,10 +210,7 @@ app.put('/me', async c => {
     const parsed = updateUserSchema.safeParse(body);
     if (!parsed.success) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: parsed.error.issues.map(i => i.message).join('; '),
-        },
+        errorResponse(parsed.error.issues.map(i => i.message).join('; ')),
         400
       );
     }
@@ -254,17 +238,11 @@ app.put('/me', async c => {
       updated_at: updatedUser.updatedAt.toISOString(),
     };
 
-    return c.json<UserResponse>({
-      success: true,
-      data: userData,
-    });
+    return c.json<UserResponse>(successResponse(userData));
   } catch (error) {
     console.error('Update user error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to update user',
-      },
+      errorResponse('Failed to update user'),
       500
     );
   }
@@ -293,10 +271,7 @@ app.get('/me/preferences', async c => {
         ingredient_ids: [],
         updated_at: new Date().toISOString(),
       };
-      return c.json<UserPreferencesResponse>({
-        success: true,
-        data: defaultPrefs,
-      });
+      return c.json<UserPreferencesResponse>(successResponse(defaultPrefs));
     }
 
     const prefsData: UserPreferences = {
@@ -305,17 +280,11 @@ app.get('/me/preferences', async c => {
       updated_at: prefs.updatedAt.toISOString(),
     };
 
-    return c.json<UserPreferencesResponse>({
-      success: true,
-      data: prefsData,
-    });
+    return c.json<UserPreferencesResponse>(successResponse(prefsData));
   } catch (error) {
     console.error('Get preferences error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch preferences',
-      },
+      errorResponse('Failed to fetch preferences'),
       500
     );
   }
@@ -334,10 +303,7 @@ app.put('/me/preferences', async c => {
     const parsed = updatePreferencesSchema.safeParse(body);
     if (!parsed.success) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: parsed.error.issues.map(i => i.message).join('; '),
-        },
+        errorResponse(parsed.error.issues.map(i => i.message).join('; ')),
         400
       );
     }
@@ -372,17 +338,11 @@ app.put('/me/preferences', async c => {
       updated_at: prefs.updatedAt.toISOString(),
     };
 
-    return c.json<UserPreferencesResponse>({
-      success: true,
-      data: prefsData,
-    });
+    return c.json<UserPreferencesResponse>(successResponse(prefsData));
   } catch (error) {
     console.error('Update preferences error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to update preferences',
-      },
+      errorResponse('Failed to update preferences'),
       500
     );
   }
@@ -418,18 +378,11 @@ app.get('/me/recipes', async c => {
     // Use batched query to avoid N+1
     const recipesWithDetails = await getCompleteRecipes(userRecipes);
 
-    return c.json<RecipeListResponse>({
-      success: true,
-      data: recipesWithDetails,
-      count: recipesWithDetails.length,
-    });
+    return c.json<RecipeListResponse>(successResponse(recipesWithDetails));
   } catch (error) {
     console.error('Get user recipes error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch user recipes',
-      },
+      errorResponse('Failed to fetch user recipes'),
       500
     );
   }
@@ -466,11 +419,7 @@ app.get('/me/favorites', async c => {
       .offset(offset);
 
     if (favorites.length === 0) {
-      return c.json<RecipeListResponse>({
-        success: true,
-        data: [],
-        count: 0,
-      });
+      return c.json<RecipeListResponse>(successResponse([]));
     }
 
     // Fetch the actual recipes
@@ -483,18 +432,11 @@ app.get('/me/favorites', async c => {
     // Use batched query to avoid N+1
     const recipesWithDetails = await getCompleteRecipes(favoriteRecipes);
 
-    return c.json<RecipeListResponse>({
-      success: true,
-      data: recipesWithDetails,
-      count: recipesWithDetails.length,
-    });
+    return c.json<RecipeListResponse>(successResponse(recipesWithDetails));
   } catch (error) {
     console.error('Get favorites error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch favorites',
-      },
+      errorResponse('Failed to fetch favorites'),
       500
     );
   }
@@ -513,10 +455,7 @@ app.post('/me/favorites', async c => {
     const parsed = addFavoriteSchema.safeParse(body);
     if (!parsed.success) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: parsed.error.issues.map(i => i.message).join('; '),
-        },
+        errorResponse(parsed.error.issues.map(i => i.message).join('; ')),
         400
       );
     }
@@ -534,13 +473,7 @@ app.post('/me/favorites', async c => {
       .limit(1);
 
     if (!recipe) {
-      return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'Recipe not found',
-        },
-        404
-      );
+      return c.json<MixrErrorResponse>(errorResponse('Recipe not found'), 404);
     }
 
     // Add to favorites (insert or ignore if already exists)
@@ -552,17 +485,11 @@ app.post('/me/favorites', async c => {
       })
       .onConflictDoNothing();
 
-    return c.json<AddFavoriteResponse>({
-      success: true,
-      message: 'Recipe added to favorites',
-    });
+    return c.json(successResponse({ message: 'Recipe added to favorites' }));
   } catch (error) {
     console.error('Add favorite error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to add favorite',
-      },
+      errorResponse('Failed to add favorite'),
       500
     );
   }
@@ -578,13 +505,7 @@ app.delete('/me/favorites/:recipeId', async c => {
     const recipeId = parseInt(c.req.param('recipeId'));
 
     if (isNaN(recipeId)) {
-      return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'Invalid recipe ID',
-        },
-        400
-      );
+      return c.json<MixrErrorResponse>(errorResponse('Invalid recipe ID'), 400);
     }
 
     // Ensure user exists
@@ -600,17 +521,13 @@ app.delete('/me/favorites/:recipeId', async c => {
         )
       );
 
-    return c.json<RemoveFavoriteResponse>({
-      success: true,
-      message: 'Recipe removed from favorites',
-    });
+    return c.json(
+      successResponse({ message: 'Recipe removed from favorites' })
+    );
   } catch (error) {
     console.error('Remove favorite error:', error);
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to remove favorite',
-      },
+      errorResponse('Failed to remove favorite'),
       500
     );
   }

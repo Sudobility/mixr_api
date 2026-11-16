@@ -19,10 +19,12 @@ describe('errorHandler', () => {
     const res = await app.request('/test');
     expect(res.status).toBe(403);
     const body = await res.json();
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       success: false,
       error: 'Forbidden access',
     });
+    // Canonical envelope adds an ISO timestamp.
+    expect(typeof body.timestamp).toBe('string');
   });
 
   test('returns 401 for unauthorized HTTPException', async () => {
@@ -47,10 +49,12 @@ describe('errorHandler', () => {
     const res = await app.request('/test');
     expect(res.status).toBe(500);
     const body = await res.json();
-    expect(body).toEqual({
+    expect(body).toMatchObject({
       success: false,
       error: 'Internal server error',
     });
+    // Canonical envelope adds an ISO timestamp.
+    expect(typeof body.timestamp).toBe('string');
   });
 
   test('does not leak error details for generic errors', async () => {

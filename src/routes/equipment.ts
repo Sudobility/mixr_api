@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
+import { successResponse, errorResponse } from '@sudobility/types';
 import { db, equipment } from '../db';
 import {
   EQUIPMENT_SUBCATEGORIES,
@@ -31,20 +32,17 @@ app.get('/', async c => {
       results = await db.select().from(equipment);
     }
 
-    return c.json<EquipmentListResponse>({
-      success: true,
-      data: results.map(r => ({
-        ...r,
-        createdAt: r.createdAt.toISOString(),
-      })),
-      count: results.length,
-    });
+    return c.json<EquipmentListResponse>(
+      successResponse(
+        results.map(r => ({
+          ...r,
+          createdAt: r.createdAt.toISOString(),
+        }))
+      )
+    );
   } catch (_error) {
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch equipment',
-      },
+      errorResponse('Failed to fetch equipment'),
       500
     );
   }
@@ -55,10 +53,9 @@ app.get('/', async c => {
  * List all valid equipment subcategory values.
  */
 app.get('/subcategories', async c => {
-  return c.json<EquipmentSubcategoriesResponse>({
-    success: true,
-    data: [...EQUIPMENT_SUBCATEGORIES],
-  });
+  return c.json<EquipmentSubcategoriesResponse>(
+    successResponse([...EQUIPMENT_SUBCATEGORIES])
+  );
 });
 
 /**
@@ -69,13 +66,7 @@ app.get('/:id', async c => {
   const id = parseInt(c.req.param('id'));
 
   if (isNaN(id)) {
-    return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Invalid ID',
-      },
-      400
-    );
+    return c.json<MixrErrorResponse>(errorResponse('Invalid ID'), 400);
   }
 
   try {
@@ -87,27 +78,20 @@ app.get('/:id', async c => {
 
     if (result.length === 0) {
       return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'Equipment not found',
-        },
+        errorResponse('Equipment not found'),
         404
       );
     }
 
-    return c.json<EquipmentResponse>({
-      success: true,
-      data: {
+    return c.json<EquipmentResponse>(
+      successResponse({
         ...result[0],
         createdAt: result[0].createdAt.toISOString(),
-      },
-    });
+      })
+    );
   } catch (_error) {
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch equipment',
-      },
+      errorResponse('Failed to fetch equipment'),
       500
     );
   }

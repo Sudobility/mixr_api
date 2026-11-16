@@ -1,5 +1,9 @@
 import { Hono } from 'hono';
-import { NONE_ENTITLEMENT } from '@sudobility/types';
+import {
+  NONE_ENTITLEMENT,
+  successResponse,
+  errorResponse,
+} from '@sudobility/types';
 import { requireAuth, type AuthUser } from '../middleware/auth';
 import { getSubscriptionHelper, getTestMode } from '../middleware/subscription';
 import type {
@@ -24,7 +28,7 @@ app.get('/:userId/subscriptions', requireAuth, async c => {
 
   if (authUser.uid !== requestedUserId) {
     return c.json<MixrErrorResponse>(
-      { success: false, error: 'You can only access your own subscription' },
+      errorResponse('You can only access your own subscription'),
       403
     );
   }
@@ -32,7 +36,7 @@ app.get('/:userId/subscriptions', requireAuth, async c => {
   const subHelper = getSubscriptionHelper();
   if (!subHelper) {
     return c.json<MixrErrorResponse>(
-      { success: false, error: 'Subscription service not configured' },
+      errorResponse('Subscription service not configured'),
       500
     );
   }
@@ -43,22 +47,20 @@ app.get('/:userId/subscriptions', requireAuth, async c => {
       requestedUserId,
       testMode
     );
-    return c.json<SubscriptionStatusResponse>({
-      success: true,
-      data: {
+    return c.json<SubscriptionStatusResponse>(
+      successResponse({
         hasSubscription:
           subscriptionInfo.entitlements.length > 0 &&
           !subscriptionInfo.entitlements.includes(NONE_ENTITLEMENT),
         entitlements: subscriptionInfo.entitlements,
         subscriptionStartedAt: subscriptionInfo.subscriptionStartedAt,
         platform: subscriptionInfo.platform,
-      },
-      timestamp: new Date().toISOString(),
-    });
+      })
+    );
   } catch (error) {
     console.error('Error fetching subscription:', error);
     return c.json<MixrErrorResponse>(
-      { success: false, error: 'Failed to fetch subscription status' },
+      errorResponse('Failed to fetch subscription status'),
       500
     );
   }

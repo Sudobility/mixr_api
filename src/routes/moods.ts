@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { eq } from 'drizzle-orm';
+import { successResponse, errorResponse } from '@sudobility/types';
 import { db, moods } from '../db';
 import type {
   MoodListResponse,
@@ -26,17 +27,10 @@ app.get('/', async c => {
   try {
     const results = await db.select().from(moods);
 
-    return c.json<MoodListResponse>({
-      success: true,
-      data: results.map(toMood),
-      count: results.length,
-    });
+    return c.json<MoodListResponse>(successResponse(results.map(toMood)));
   } catch (_error) {
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch moods',
-      },
+      errorResponse('Failed to fetch moods'),
       500
     );
   }
@@ -50,13 +44,7 @@ app.get('/:id', async c => {
   const id = parseInt(c.req.param('id'));
 
   if (isNaN(id)) {
-    return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Invalid ID',
-      },
-      400
-    );
+    return c.json<MixrErrorResponse>(errorResponse('Invalid ID'), 400);
   }
 
   try {
@@ -67,25 +55,13 @@ app.get('/:id', async c => {
       .limit(1);
 
     if (result.length === 0) {
-      return c.json<MixrErrorResponse>(
-        {
-          success: false,
-          error: 'Mood not found',
-        },
-        404
-      );
+      return c.json<MixrErrorResponse>(errorResponse('Mood not found'), 404);
     }
 
-    return c.json<MoodResponse>({
-      success: true,
-      data: toMood(result[0]),
-    });
+    return c.json<MoodResponse>(successResponse(toMood(result[0])));
   } catch (_error) {
     return c.json<MixrErrorResponse>(
-      {
-        success: false,
-        error: 'Failed to fetch mood',
-      },
+      errorResponse('Failed to fetch mood'),
       500
     );
   }

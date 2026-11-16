@@ -1,14 +1,18 @@
 import { test, expect, describe } from "vitest";
+import { successResponse, errorResponse } from "@sudobility/types";
 
 describe("health check", () => {
   test("API response format is consistent", () => {
-    // Verify the expected response shape used across all endpoints
-    const successResponse = { success: true, data: [], count: 0 };
-    const errorResponse = { success: false, error: "Something went wrong" };
+    // Verify the canonical envelope shape used across all endpoints.
+    const success = successResponse([]);
+    const error = errorResponse("Something went wrong");
 
-    expect(successResponse).toHaveProperty("success", true);
-    expect(successResponse).toHaveProperty("data");
-    expect(errorResponse).toHaveProperty("success", false);
-    expect(errorResponse).toHaveProperty("error");
+    expect(success).toHaveProperty("success", true);
+    expect(success).toHaveProperty("data");
+    expect(typeof success.timestamp).toBe("string");
+
+    expect(error).toHaveProperty("success", false);
+    expect(error).toHaveProperty("error", "Something went wrong");
+    expect(typeof error.timestamp).toBe("string");
   });
 });
